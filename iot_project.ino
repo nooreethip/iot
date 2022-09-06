@@ -1,47 +1,28 @@
+const int analogInPin = A0;
+const int relay = 2;
 
-#include <TridentTD_LineNotify.h>
-const char* ssid     = "All_for_one";
-const char* password = "ggwp1234";
-#define LINE_TOKEN  "VuiImBaCROKIRpTNFai7fHNo7O75knBa2o3vX0PWj26"
-int Smoke_MQ2 = A0; //ประกาศตัวแปร MQ2 ให้ analogPin
-int Smoke_MQ2Value = 0;
-int Smoke_MQ2outputValue = 0; // ตัวแปรสำหรับ Map เพื่อคิด %
-int buzzer = D8;
+int sensorValue = 0;        // ตัวแปรค่า Analog
+int outputValue = 0;        // ตัวแปรสำหรับ Map เพื่อคิด %
 
-void setup()
-{
-  Serial.begin(115200);
-  pinMode(buzzer, OUTPUT);
-  Serial.println(LINE.getVersion());
-  WiFi.begin(ssid, password);
-  Serial.println("Connecting... ");
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    Serial.println("Connecting... ");
-    delay(250);
-    Serial.print(".");
-    Serial.printf("Connection Status: %d\n", WiFi.status());
-  }
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-  LINE.setToken(LINE_TOKEN);
+void setup() {
+  Serial.begin(9600);
+  pinMode(relay, OUTPUT);
 }
 
-void loop()
-{
+void loop() {
+  sensorValue = analogRead(analogInPin);
+  outputValue = map(sensorValue, 0, 1023, 100, 0);
 
-  int Smoke_MQ2Value = analogRead (Smoke_MQ2);
-  int Smoke_MQ2outputValue = map(Smoke_MQ2Value, 0, 1023, 0, 100); //แปลงค่าจาก
-  Serial.print("ค่าตรวจจับแก๊ส:     ");
-  Serial.println(Smoke_MQ2outputValue);
+  Serial.print("Soil Moisture = ");
+  Serial.print(outputValue);
   Serial.println(" %");
-  if (Smoke_MQ2outputValue >= 40) { //ตั้งค่า % ที่ต้องการให้แจ้งเตือน 0-100
-    LINE.notify("แจ้งเตือน : มีการสูบบุหรี่ !!"); // ส่งข้อความไปยัง Line "แจ้งเตือน : ตรวจพบควันเกินค่ากำหนด"
-    digitalWrite(buzzer, LOW);   //เปิดเสียงเตือน
+
+  if (outputValue <= 40) {  //ตั้งค่า % ที่ต้องการจะรดน้ำต้นไม้
+    digitalWrite(relay, HIGH);
   }
-  else {
-    digitalWrite(buzzer, HIGH); //ปิดเสียงเตือน
+
+  else if(outputValue > 60){  //ตั้งค่า % ที่ต้องการจะปิดน้ำ
+    digitalWrite(relay, LOW);
   }
-  delay(500);
+  delay(1000);
 }
